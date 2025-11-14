@@ -183,24 +183,24 @@ async function loadArtistContent(name) {
     // 현재 로딩 중인 작가 설정
     loadingArtist = name;
     
+    // 모든 섹션을 먼저 표시 (기본 상태)
+    document.getElementById('about-section').classList.remove('hidden');
+    document.getElementById('press-section').classList.remove('hidden');
+    document.getElementById('cv-section').classList.remove('hidden');
+    
     // 모든 섹션 콘텐츠 초기화
     document.getElementById('about-content').innerHTML = '';
     document.getElementById('press-content').innerHTML = '';
     document.getElementById('cv-content').innerHTML = '';
     
-    // Press 섹션 초기화 (항상 먼저 숨김)
-    document.getElementById('press-section').classList.add('hidden');
-    
     // About Artist
     if (artist.hasNote) {
-        const aboutButton = document.querySelector('[data-section="about"]');
         const aboutContent = document.getElementById('about-content');
-        aboutButton.parentElement.classList.remove('hidden');
-        aboutContent.classList.remove('hidden'); // hidden 클래스 제거
         aboutContent.innerHTML = '<div class="loading">로딩 중...</div>';
         await loadDocx(getFilePath(name, 'note'), aboutContent, name);
     } else {
-        document.querySelector('[data-section="about"]').parentElement.classList.add('hidden');
+        // 파일이 없으면 About Artist 섹션 숨기기
+        document.getElementById('about-section').classList.add('hidden');
     }
     
     // 로딩 중 작가가 변경되었는지 확인
@@ -208,18 +208,15 @@ async function loadArtistContent(name) {
     
     // Press
     if (artist.hasPress) {
-        const pressButton = document.querySelector('[data-section="press"]');
         const pressContent = document.getElementById('press-content');
-        const pressSection = document.getElementById('press-section');
-        pressSection.classList.remove('hidden');
-        pressContent.classList.remove('hidden'); // hidden 클래스 제거
         pressContent.innerHTML = '<div class="loading">로딩 중...</div>';
         const pressLoaded = await loadPressList(name, pressContent);
-        // 파일이 없으면 Press 섹션 숨기기
+        // 파일이 없거나 로드 실패하면 Press 섹션 숨기기
         if (!pressLoaded) {
-            pressSection.classList.add('hidden');
+            document.getElementById('press-section').classList.add('hidden');
         }
     } else {
+        // hasPress가 false면 Press 섹션 숨기기
         document.getElementById('press-section').classList.add('hidden');
     }
     
@@ -228,14 +225,12 @@ async function loadArtistContent(name) {
     
     // CV
     if (artist.hasProfile) {
-        const cvButton = document.querySelector('[data-section="cv"]');
         const cvContent = document.getElementById('cv-content');
-        cvButton.parentElement.classList.remove('hidden');
-        cvContent.classList.remove('hidden'); // hidden 클래스 제거
         cvContent.innerHTML = '<div class="loading">로딩 중...</div>';
         await loadDocx(getFilePath(name, 'profile'), cvContent, name);
     } else {
-        document.querySelector('[data-section="cv"]').parentElement.classList.add('hidden');
+        // 파일이 없으면 CV 섹션 숨기기
+        document.getElementById('cv-section').classList.add('hidden');
     }
     
     // 모든 섹션 닫기
@@ -575,8 +570,7 @@ function toggleSection(section) {
             b.classList.remove('active');
         });
         
-        // 현재 섹션 열기 - hidden 클래스 제거하고 active 추가
-        content.classList.remove('hidden');
+        // 현재 섹션 열기
         content.classList.add('active');
         button.classList.add('active');
     }

@@ -216,14 +216,12 @@ body {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-    display: none; /* 기본적으로 숨김 */
 }
 
 .section-content.active {
     padding: 1.5rem 1rem;
     max-height: 2000px;
     transition: max-height 0.5s ease-in, padding 0.3s ease-in;
-    display: block !important; /* active일 때 항상 표시 */
 }
 
 .hidden {
