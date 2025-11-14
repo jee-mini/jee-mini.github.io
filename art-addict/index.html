@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Addict - 전시회</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- 메인 화면 -->
+    <div id="main-page" class="page active">
+        <header class="header">
+            <button id="menu-toggle" class="menu-toggle" aria-label="메뉴">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </header>
+        
+        <div class="main-content">
+            <div class="exhibition-info">
+                <h1 class="exhibition-title">Art Addict</h1>
+                <img src="main/logo.png" alt="전시회 로고" class="logo">
+            </div>
+        </div>
+        
+        <!-- 메뉴 오버레이 -->
+        <div id="menu-overlay" class="menu-overlay">
+            <div class="menu-content">
+                <h2>작가 목록</h2>
+                <ul id="artist-list" class="artist-list">
+                    <!-- JavaScript로 동적 생성 -->
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 작가 페이지 -->
+    <div id="artist-page" class="page">
+        <header class="header">
+            <button id="back-button" class="back-button" aria-label="뒤로가기">
+                ←
+            </button>
+            <h2 id="artist-name" class="artist-page-title"></h2>
+        </header>
+        
+        <div class="artist-content">
+            <div class="artist-section">
+                <button class="section-toggle" data-section="about">
+                    <span>About Artist</span>
+                    <span class="toggle-icon">▼</span>
+                </button>
+                <div id="about-content" class="section-content hidden"></div>
+            </div>
+            
+            <div id="press-section" class="artist-section hidden">
+                <button class="section-toggle" data-section="press">
+                    <span>Press</span>
+                    <span class="toggle-icon">▼</span>
+                </button>
+                <div id="press-content" class="section-content hidden"></div>
+            </div>
+            
+            <div class="artist-section">
+                <button class="section-toggle" data-section="cv">
+                    <span>CV</span>
+                    <span class="toggle-icon">▼</span>
+                </button>
+                <div id="cv-content" class="section-content hidden"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 평론 상세 페이지 -->
+    <div id="press-detail-page" class="page">
+        <header class="header">
+            <button id="press-back-button" class="back-button" aria-label="뒤로가기">
+                ←
+            </button>
+            <h2 id="press-title" class="artist-page-title"></h2>
+        </header>
+        
+        <div class="press-detail-content">
+            <div id="press-detail-text"></div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script>
+        // Base path 설정
+        (function() {
+            const script = document.currentScript;
+            const scriptPath = script.src;
+            const basePath = scriptPath.substring(0, scriptPath.lastIndexOf('/'));
+            window.APP_BASE_PATH = basePath;
+        })();
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>
+
