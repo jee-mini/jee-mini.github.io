@@ -304,10 +304,13 @@ async function loadPressList(artistName, targetElement) {
             return false;
         }
         
-        const response = await fetch(getFilePath(artistName, 'press'));
+        const filePath = getFilePath(artistName, 'press');
+        console.log('Press 파일 로드 시도:', filePath);
+        const response = await fetch(filePath);
         if (!response.ok) {
             // 404 에러인 경우 파일이 없는 것으로 간주
             if (response.status === 404) {
+                console.log('Press 파일을 찾을 수 없음 (404):', filePath);
                 return false;
             }
             throw new Error(`파일을 불러올 수 없습니다: ${response.status}`);
@@ -327,8 +330,11 @@ async function loadPressList(artistName, targetElement) {
         const doc = parser.parseFromString(result.value, 'text/html');
         const paragraphs = doc.querySelectorAll('p, h1, h2, h3');
         
+        console.log('파싱된 단락 수:', paragraphs.length);
+        
         if (paragraphs.length === 0) {
             // 평론이 없으면 false 반환하여 Press 섹션 숨기기
+            console.log('평론 단락이 없음');
             return false;
         }
         
@@ -377,8 +383,11 @@ async function loadPressList(artistName, targetElement) {
             });
         }
         
+        console.log('평론 항목 수:', pressItems.length);
+        
         if (pressItems.length === 0) {
             // 평론이 없으면 false 반환하여 Press 섹션 숨기기
+            console.log('평론 항목이 없음');
             return false;
         }
         
@@ -416,6 +425,7 @@ async function loadPressList(artistName, targetElement) {
             return false;
         }
         
+        console.log('Press 리스트 성공적으로 로드됨:', pressItems.length, '개 항목');
         targetElement.innerHTML = '';
         targetElement.appendChild(pressList);
         return true; // 성공적으로 로드됨
