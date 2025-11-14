@@ -196,6 +196,7 @@ async function loadArtistContent(name) {
         const aboutButton = document.querySelector('[data-section="about"]');
         const aboutContent = document.getElementById('about-content');
         aboutButton.parentElement.classList.remove('hidden');
+        aboutContent.classList.remove('hidden'); // hidden 클래스 제거
         aboutContent.innerHTML = '<div class="loading">로딩 중...</div>';
         await loadDocx(getFilePath(name, 'note'), aboutContent, name);
     } else {
@@ -211,6 +212,7 @@ async function loadArtistContent(name) {
         const pressContent = document.getElementById('press-content');
         const pressSection = document.getElementById('press-section');
         pressSection.classList.remove('hidden');
+        pressContent.classList.remove('hidden'); // hidden 클래스 제거
         pressContent.innerHTML = '<div class="loading">로딩 중...</div>';
         const pressLoaded = await loadPressList(name, pressContent);
         // 파일이 없으면 Press 섹션 숨기기
@@ -229,6 +231,7 @@ async function loadArtistContent(name) {
         const cvButton = document.querySelector('[data-section="cv"]');
         const cvContent = document.getElementById('cv-content');
         cvButton.parentElement.classList.remove('hidden');
+        cvContent.classList.remove('hidden'); // hidden 클래스 제거
         cvContent.innerHTML = '<div class="loading">로딩 중...</div>';
         await loadDocx(getFilePath(name, 'profile'), cvContent, name);
     } else {

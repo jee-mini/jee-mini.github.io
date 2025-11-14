@@ -222,6 +222,7 @@ body {
     padding: 1.5rem 1rem;
     max-height: 2000px;
     transition: max-height 0.5s ease-in, padding 0.3s ease-in;
+    display: block !important; /* active일 때 항상 표시 */
 }
 
 .hidden {
@@ -232,8 +233,9 @@ body {
     display: none;
 }
 
+/* active 클래스가 있으면 hidden을 무시 */
 .section-content.active.hidden {
-    display: block;
+    display: block !important;
 }
 
 .section-content p,
