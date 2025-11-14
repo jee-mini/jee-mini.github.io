@@ -11,7 +11,7 @@ const artists = [
     { name: '박현주', hasNote: true, hasPress: false, hasProfile: true },
     { name: '송윤주', hasNote: false, hasPress: false, hasProfile: true },
     { name: '안지용', hasNote: true, hasPress: false, hasProfile: true },
-    { name: '이창남', hasNote: true, haspress: false, hasProfile: true },
+    { name: '이창남', hasNote: true, hasPress: false, hasProfile: true },
     { name: '홍성용', hasNote: true, hasPress: false, hasProfile: true },
     { name: '황혜선', hasNote: false, hasPress: false, hasProfile: true },
     // 새로운 작가 추가 예시:
