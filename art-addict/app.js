@@ -8,12 +8,12 @@ const artists = [
     { name: '김강용', hasNote: true, hasPress: false, hasProfile: true },
     { name: '김덕용', hasNote: true, hasPress: false, hasProfile: true },
     { name: '김은형', hasNote: true, hasPress: true, hasProfile: true },
+    { name: '김지민', hasNote: true, hasPress: true, hasProfile: true},
     { name: '박현주', hasNote: true, hasPress: false, hasProfile: true },
     { name: '송윤주', hasNote: false, hasPress: false, hasProfile: true },
     { name: '안지용', hasNote: true, hasPress: false, hasProfile: true },
     { name: '홍성용', hasNote: true, hasPress: false, hasProfile: true },
     { name: '황혜선', hasNote: false, hasPress: false, hasProfile: true },
-    { name: '김지민', hasNote: true, hasPress: true, hasProfile: true},
     // 새로운 작가 추가 예시:
     // { name: '새작가명', hasNote: true, hasPress: false, hasProfile: true }
 ];
