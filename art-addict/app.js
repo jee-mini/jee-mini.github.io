@@ -188,6 +188,9 @@ async function loadArtistContent(name) {
     document.getElementById('press-content').innerHTML = '';
     document.getElementById('cv-content').innerHTML = '';
     
+    // Press 섹션 초기화 (항상 먼저 숨김)
+    document.getElementById('press-section').classList.add('hidden');
+    
     // About Artist
     if (artist.hasNote) {
         const aboutButton = document.querySelector('[data-section="about"]');
@@ -203,19 +206,19 @@ async function loadArtistContent(name) {
     if (loadingArtist !== name) return;
     
     // Press
-    // 먼저 Press 섹션을 숨김 (평론이 있을 때만 표시)
-    const pressSection = document.getElementById('press-section');
-    pressSection.classList.add('hidden');
-    
     if (artist.hasPress) {
         const pressButton = document.querySelector('[data-section="press"]');
         const pressContent = document.getElementById('press-content');
+        const pressSection = document.getElementById('press-section');
+        pressSection.classList.remove('hidden');
         pressContent.innerHTML = '<div class="loading">로딩 중...</div>';
         const pressLoaded = await loadPressList(name, pressContent);
-        // 평론이 있으면 Press 섹션 표시
-        if (pressLoaded) {
-            pressSection.classList.remove('hidden');
+        // 파일이 없으면 Press 섹션 숨기기
+        if (!pressLoaded) {
+            pressSection.classList.add('hidden');
         }
+    } else {
+        document.getElementById('press-section').classList.add('hidden');
     }
     
     // 로딩 중 작가가 변경되었는지 확인
@@ -325,8 +328,8 @@ async function loadPressList(artistName, targetElement) {
         const paragraphs = doc.querySelectorAll('p, h1, h2, h3');
         
         if (paragraphs.length === 0) {
-            targetElement.innerHTML = '<p>평론이 없습니다.</p>';
-            return;
+            // 평론이 없으면 false 반환하여 Press 섹션 숨기기
+            return false;
         }
         
         // 평론을 그룹화: 제목(h1, h2, h3) 또는 첫 번째 단락을 제목으로
