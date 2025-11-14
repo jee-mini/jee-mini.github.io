@@ -20,6 +20,7 @@ const artists = [
 // 현재 상태
 let currentArtist = null;
 let currentPressIndex = null;
+let loadingArtist = null; // 현재 로딩 중인 작가 이름
 
 // DOM 요소
 const mainPage = document.getElementById('main-page');
@@ -179,16 +180,27 @@ async function loadArtistContent(name) {
     const artist = artists.find(a => a.name === name);
     if (!artist) return;
     
+    // 현재 로딩 중인 작가 설정
+    loadingArtist = name;
+    
+    // 모든 섹션 콘텐츠 초기화
+    document.getElementById('about-content').innerHTML = '';
+    document.getElementById('press-content').innerHTML = '';
+    document.getElementById('cv-content').innerHTML = '';
+    
     // About Artist
     if (artist.hasNote) {
         const aboutButton = document.querySelector('[data-section="about"]');
         const aboutContent = document.getElementById('about-content');
         aboutButton.parentElement.classList.remove('hidden');
         aboutContent.innerHTML = '<div class="loading">로딩 중...</div>';
-        await loadDocx(getFilePath(name, 'note'), aboutContent);
+        await loadDocx(getFilePath(name, 'note'), aboutContent, name);
     } else {
         document.querySelector('[data-section="about"]').parentElement.classList.add('hidden');
     }
+    
+    // 로딩 중 작가가 변경되었는지 확인
+    if (loadingArtist !== name) return;
     
     // Press
     if (artist.hasPress) {
@@ -206,13 +218,16 @@ async function loadArtistContent(name) {
         document.getElementById('press-section').classList.add('hidden');
     }
     
+    // 로딩 중 작가가 변경되었는지 확인
+    if (loadingArtist !== name) return;
+    
     // CV
     if (artist.hasProfile) {
         const cvButton = document.querySelector('[data-section="cv"]');
         const cvContent = document.getElementById('cv-content');
         cvButton.parentElement.classList.remove('hidden');
         cvContent.innerHTML = '<div class="loading">로딩 중...</div>';
-        await loadDocx(getFilePath(name, 'profile'), cvContent);
+        await loadDocx(getFilePath(name, 'profile'), cvContent, name);
     } else {
         document.querySelector('[data-section="cv"]').parentElement.classList.add('hidden');
     }
@@ -227,9 +242,9 @@ async function loadArtistContent(name) {
 }
 
 // .docx 파일 로드 및 변환
-async function loadDocx(filePath, targetElement) {
+async function loadDocx(filePath, targetElement, expectedArtist) {
     try {
-        console.log('파일 로드 시도:', filePath);
+        console.log('파일 로드 시도:', filePath, '작가:', expectedArtist);
         const response = await fetch(filePath);
         if (!response.ok) {
             throw new Error(`파일을 불러올 수 없습니다: ${response.status} ${response.statusText}`);
@@ -238,6 +253,12 @@ async function loadDocx(filePath, targetElement) {
         const arrayBuffer = await response.arrayBuffer();
         const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
         
+        // 로딩 중 작가가 변경되었는지 확인 (다른 작가 페이지로 이동한 경우)
+        if (expectedArtist && loadingArtist !== expectedArtist) {
+            console.log('작가가 변경되어 콘텐츠 로드 취소:', expectedArtist, '->', loadingArtist);
+            return; // 콘텐츠를 표시하지 않음
+        }
+        
         targetElement.innerHTML = result.value;
         
         // 에러가 있으면 표시
@@ -245,6 +266,12 @@ async function loadDocx(filePath, targetElement) {
             console.warn('변환 경고:', result.messages);
         }
     } catch (error) {
+        // 로딩 중 작가가 변경되었는지 확인
+        if (expectedArtist && loadingArtist !== expectedArtist) {
+            console.log('작가가 변경되어 에러 처리 취소:', expectedArtist, '->', loadingArtist);
+            return;
+        }
+        
         console.error('파일 로드 오류:', error);
         console.error('시도한 경로:', filePath);
         console.error('현재 URL:', window.location.href);
@@ -268,6 +295,12 @@ async function loadDocx(filePath, targetElement) {
 // 반환값: 파일이 성공적으로 로드되었으면 true, 없으면 false
 async function loadPressList(artistName, targetElement) {
     try {
+        // 로딩 중 작가가 변경되었는지 확인
+        if (loadingArtist !== artistName) {
+            console.log('작가가 변경되어 Press 리스트 로드 취소:', artistName, '->', loadingArtist);
+            return false;
+        }
+        
         const response = await fetch(getFilePath(artistName, 'press'));
         if (!response.ok) {
             // 404 에러인 경우 파일이 없는 것으로 간주
@@ -279,6 +312,12 @@ async function loadPressList(artistName, targetElement) {
         
         const arrayBuffer = await response.arrayBuffer();
         const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+        
+        // 로딩 중 작가가 변경되었는지 다시 확인
+        if (loadingArtist !== artistName) {
+            console.log('작가가 변경되어 Press 리스트 표시 취소:', artistName, '->', loadingArtist);
+            return false;
+        }
         
         // HTML을 파싱하여 각 평론을 분리
         const parser = new DOMParser();
@@ -336,8 +375,14 @@ async function loadPressList(artistName, targetElement) {
         }
         
         if (pressItems.length === 0) {
-            targetElement.innerHTML = '<p>평론이 없습니다.</p>';
-            return;
+            // 평론이 없으면 false 반환하여 Press 섹션 숨기기
+            return false;
+        }
+        
+        // 로딩 중 작가가 변경되었는지 다시 확인 (파싱 후)
+        if (loadingArtist !== artistName) {
+            console.log('작가가 변경되어 Press 리스트 표시 취소 (파싱 후):', artistName, '->', loadingArtist);
+            return false;
         }
         
         const pressList = document.createElement('ul');
@@ -361,6 +406,12 @@ async function loadPressList(artistName, targetElement) {
             window.pressData = {};
         }
         window.pressData[artistName] = pressItems;
+        
+        // 최종 확인: 로딩 중 작가가 변경되었는지 확인
+        if (loadingArtist !== artistName) {
+            console.log('작가가 변경되어 Press 리스트 표시 취소 (최종):', artistName, '->', loadingArtist);
+            return false;
+        }
         
         targetElement.innerHTML = '';
         targetElement.appendChild(pressList);
@@ -474,10 +525,25 @@ async function showPressDetail(artistName, pressIndex, pressItem = null) {
 
 // 섹션 토글
 function toggleSection(section) {
+    // 현재 작가 페이지에 있는지 확인
+    if (!artistPage.classList.contains('active') || !currentArtist) {
+        return;
+    }
+    
+    // 로딩 중인 경우 토글하지 않음
+    if (loadingArtist && loadingArtist !== currentArtist) {
+        return;
+    }
+    
     const button = document.querySelector(`[data-section="${section}"]`);
     const content = document.getElementById(`${section}-content`);
     
     if (!button || !content) return;
+    
+    // 섹션이 숨겨져 있으면 토글하지 않음
+    if (button.parentElement.classList.contains('hidden')) {
+        return;
+    }
     
     const isActive = content.classList.contains('active');
     
