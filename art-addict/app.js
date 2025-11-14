@@ -203,19 +203,19 @@ async function loadArtistContent(name) {
     if (loadingArtist !== name) return;
     
     // Press
+    // 먼저 Press 섹션을 숨김 (평론이 있을 때만 표시)
+    const pressSection = document.getElementById('press-section');
+    pressSection.classList.add('hidden');
+    
     if (artist.hasPress) {
         const pressButton = document.querySelector('[data-section="press"]');
         const pressContent = document.getElementById('press-content');
-        const pressSection = document.getElementById('press-section');
-        pressSection.classList.remove('hidden');
         pressContent.innerHTML = '<div class="loading">로딩 중...</div>';
         const pressLoaded = await loadPressList(name, pressContent);
-        // 파일이 없으면 Press 섹션 숨기기
-        if (!pressLoaded) {
-            pressSection.classList.add('hidden');
+        // 평론이 있으면 Press 섹션 표시
+        if (pressLoaded) {
+            pressSection.classList.remove('hidden');
         }
-    } else {
-        document.getElementById('press-section').classList.add('hidden');
     }
     
     // 로딩 중 작가가 변경되었는지 확인
