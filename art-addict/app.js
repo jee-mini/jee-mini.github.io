@@ -197,7 +197,11 @@ async function loadArtistContent(name) {
         const pressSection = document.getElementById('press-section');
         pressSection.classList.remove('hidden');
         pressContent.innerHTML = '<div class="loading">로딩 중...</div>';
-        await loadPressList(name, pressContent);
+        const pressLoaded = await loadPressList(name, pressContent);
+        // 파일이 없으면 Press 섹션 숨기기
+        if (!pressLoaded) {
+            pressSection.classList.add('hidden');
+        }
     } else {
         document.getElementById('press-section').classList.add('hidden');
     }
@@ -261,10 +265,15 @@ async function loadDocx(filePath, targetElement) {
 }
 
 // Press 리스트 로드
+// 반환값: 파일이 성공적으로 로드되었으면 true, 없으면 false
 async function loadPressList(artistName, targetElement) {
     try {
         const response = await fetch(getFilePath(artistName, 'press'));
         if (!response.ok) {
+            // 404 에러인 경우 파일이 없는 것으로 간주
+            if (response.status === 404) {
+                return false;
+            }
             throw new Error(`파일을 불러올 수 없습니다: ${response.status}`);
         }
         
@@ -355,10 +364,16 @@ async function loadPressList(artistName, targetElement) {
         
         targetElement.innerHTML = '';
         targetElement.appendChild(pressList);
+        return true; // 성공적으로 로드됨
         
     } catch (error) {
         console.error('Press 리스트 로드 오류:', error);
+        // 파일을 찾을 수 없는 경우 (404 등) false 반환
+        if (error.message.includes('404') || error.message.includes('Failed to fetch')) {
+            return false;
+        }
         targetElement.innerHTML = `<div class="error">평론을 불러올 수 없습니다: ${error.message}</div>`;
+        return true; // 에러가 있지만 섹션은 표시
     }
 }
 
