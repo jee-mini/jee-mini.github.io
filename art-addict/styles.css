@@ -216,6 +216,7 @@ body {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+    display: none; /* 기본적으로 숨김 */
 }
 
 .section-content.active {

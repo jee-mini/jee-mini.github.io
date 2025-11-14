@@ -575,7 +575,8 @@ function toggleSection(section) {
             b.classList.remove('active');
         });
         
-        // 현재 섹션 열기
+        // 현재 섹션 열기 - hidden 클래스 제거하고 active 추가
+        content.classList.remove('hidden');
         content.classList.add('active');
         button.classList.add('active');
     }
