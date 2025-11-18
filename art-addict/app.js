@@ -398,7 +398,7 @@ async function loadPressList(artistName, targetElement) {
                 for (let para of paragraphs) {
                     const text = para.textContent.trim();
                     if (text) {
-                        displayName = text.length > 100 ? text.substring(0, 100) + '...' : text;
+                        displayName = text.length > 200 ? text.substring(0, 200) + '...' : text;
                         break;
                     }
                 }
