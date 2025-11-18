@@ -94,8 +94,19 @@ function handleRouting() {
         const parts = hash.split('/');
         if (parts.length === 3) {
             const artistName = decodeURIComponent(parts[1]);
-            const pressIndex = parseInt(parts[2]);
-            showPressDetail(artistName, pressIndex);
+            const pressFileIndex = parseInt(parts[2]);
+            
+            // 저장된 평론 데이터에서 파일 찾기
+            if (window.pressData && window.pressData[artistName]) {
+                const pressItem = window.pressData[artistName].find(item => item.fileIndex === pressFileIndex);
+                if (pressItem) {
+                    showPressDetailFromFile(artistName, pressItem);
+                    return;
+                }
+            }
+            
+            // 데이터가 없으면 기존 방식으로 처리
+            showPressDetail(artistName, pressFileIndex);
             return;
         }
     }
@@ -149,7 +160,7 @@ function navigateToArtistFromPress() {
 }
 
 // 파일 경로 생성 헬퍼 함수
-function getFilePath(name, type) {
+function getFilePath(name, type, index = 1) {
     // 현재 페이지의 base path를 가져옴
     let basePath = window.location.pathname;
     
@@ -169,13 +180,44 @@ function getFilePath(name, type) {
     if (type === 'note') {
         fileName = `${name}_작가노트_2025(by블루로터스).docx`;
     } else if (type === 'press') {
-        fileName = `${name}_평론.docx`;
+        if (index === 1) {
+            fileName = `${name}_평론.docx`;
+        } else {
+            fileName = `${name}_평론${index}.docx`;
+        }
     } else if (type === 'profile') {
         fileName = `${name}_프로필_2025(by블루로터스).docx`;
     }
     
     // 상대 경로 사용 (로컬과 GitHub Pages 모두에서 작동)
     return `${basePath}/artists/${name}/${fileName}`;
+}
+
+// 여러 평론 파일 찾기
+async function findPressFiles(artistName) {
+    const pressFiles = [];
+    let index = 1;
+    
+    while (true) {
+        const filePath = getFilePath(artistName, 'press', index);
+        try {
+            const response = await fetch(filePath, { method: 'HEAD' });
+            if (response.ok) {
+                pressFiles.push({
+                    path: filePath,
+                    index: index,
+                    name: index === 1 ? `${artistName}_평론.docx` : `${artistName}_평론${index}.docx`
+                });
+                index++;
+            } else {
+                break; // 파일이 없으면 중단
+            }
+        } catch (error) {
+            break; // 에러 발생 시 중단
+        }
+    }
+    
+    return pressFiles;
 }
 
 // 작가 콘텐츠 로드
@@ -305,20 +347,15 @@ async function loadPressList(artistName, targetElement) {
             return false;
         }
         
-        const filePath = getFilePath(artistName, 'press');
-        console.log('Press 파일 로드 시도:', filePath);
-        const response = await fetch(filePath);
-        if (!response.ok) {
-            // 404 에러인 경우 파일이 없는 것으로 간주
-            if (response.status === 404) {
-                console.log('Press 파일을 찾을 수 없음 (404):', filePath);
-                return false;
-            }
-            throw new Error(`파일을 불러올 수 없습니다: ${response.status}`);
+        // 여러 평론 파일 찾기
+        const pressFiles = await findPressFiles(artistName);
+        
+        if (pressFiles.length === 0) {
+            console.log('Press 파일을 찾을 수 없음');
+            return false;
         }
         
-        const arrayBuffer = await response.arrayBuffer();
-        const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+        console.log('찾은 Press 파일 수:', pressFiles.length);
         
         // 로딩 중 작가가 변경되었는지 다시 확인
         if (loadingArtist !== artistName) {
@@ -326,93 +363,83 @@ async function loadPressList(artistName, targetElement) {
             return false;
         }
         
-        // HTML을 파싱하여 각 평론을 분리
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(result.value, 'text/html');
-        const paragraphs = doc.querySelectorAll('p, h1, h2, h3');
+        const pressList = document.createElement('ul');
+        pressList.className = 'press-list';
         
-        console.log('파싱된 단락 수:', paragraphs.length);
-        
-        if (paragraphs.length === 0) {
-            // 평론이 없으면 false 반환하여 Press 섹션 숨기기
-            console.log('평론 단락이 없음');
-            return false;
-        }
-        
-        // 평론을 그룹화: 제목(h1, h2, h3) 또는 첫 번째 단락을 제목으로
+        // 각 파일을 개별 항목으로 표시
         const pressItems = [];
-        let currentItem = null;
         
-        paragraphs.forEach((para) => {
-            const text = para.textContent.trim();
-            if (!text) return;
+        for (let i = 0; i < pressFiles.length; i++) {
+            const file = pressFiles[i];
             
-            const tagName = para.tagName.toLowerCase();
-            const isHeading = ['h1', 'h2', 'h3'].includes(tagName);
+            // 로딩 중 작가가 변경되었는지 확인
+            if (loadingArtist !== artistName) {
+                console.log('작가가 변경되어 Press 리스트 로드 취소:', artistName, '->', loadingArtist);
+                return false;
+            }
             
-            if (isHeading || (!currentItem && tagName === 'p')) {
-                // 새 평론 항목 시작
-                if (currentItem) {
-                    pressItems.push(currentItem);
+            try {
+                const response = await fetch(file.path);
+                if (!response.ok) {
+                    console.log(`Press 파일 로드 실패: ${file.path}`);
+                    continue;
                 }
-                currentItem = {
-                    title: text,
-                    content: [],
+                
+                const arrayBuffer = await response.arrayBuffer();
+                const result = await mammoth.convertToHtml({ arrayBuffer: arrayBuffer });
+                
+                // HTML을 파싱하여 첫 줄 추출
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(result.value, 'text/html');
+                const paragraphs = doc.querySelectorAll('p, h1, h2, h3');
+                
+                // 첫 번째 비어있지 않은 단락이나 제목을 제목으로 사용
+                let displayName = file.index === 1 ? '평론' : `평론 ${file.index}`; // 기본값
+                for (let para of paragraphs) {
+                    const text = para.textContent.trim();
+                    if (text) {
+                        displayName = text.length > 100 ? text.substring(0, 100) + '...' : text;
+                        break;
+                    }
+                }
+                
+                const pressItem = {
+                    title: displayName,
+                    content: result.value,
+                    fileIndex: file.index,
                     index: pressItems.length
                 };
-            } else if (currentItem) {
-                // 현재 항목에 내용 추가
-                currentItem.content.push(para.outerHTML);
+                
+                pressItems.push(pressItem);
+                
+                // 리스트 아이템 생성
+                const li = document.createElement('li');
+                const a = document.createElement('a');
+                a.href = '#';
+                a.textContent = displayName;
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPressDetailFromFile(artistName, pressItem);
+                });
+                li.appendChild(a);
+                pressList.appendChild(li);
+                
+            } catch (error) {
+                console.error(`Press 파일 로드 오류 (${file.path}):`, error);
+                continue;
             }
-        });
-        
-        if (currentItem) {
-            pressItems.push(currentItem);
         }
         
-        // 평론이 하나도 없으면 모든 단락을 개별 항목으로 처리
         if (pressItems.length === 0) {
-            paragraphs.forEach((para, index) => {
-                const text = para.textContent.trim();
-                if (text) {
-                    pressItems.push({
-                        title: text.length > 60 ? text.substring(0, 60) + '...' : text,
-                        content: [para.outerHTML],
-                        index: index
-                    });
-                }
-            });
-        }
-        
-        console.log('평론 항목 수:', pressItems.length);
-        
-        if (pressItems.length === 0) {
-            // 평론이 없으면 false 반환하여 Press 섹션 숨기기
             console.log('평론 항목이 없음');
             return false;
         }
         
-        // 로딩 중 작가가 변경되었는지 다시 확인 (파싱 후)
+        // 로딩 중 작가가 변경되었는지 다시 확인
         if (loadingArtist !== artistName) {
             console.log('작가가 변경되어 Press 리스트 표시 취소 (파싱 후):', artistName, '->', loadingArtist);
             return false;
         }
-        
-        const pressList = document.createElement('ul');
-        pressList.className = 'press-list';
-        
-        pressItems.forEach((item) => {
-            const li = document.createElement('li');
-            const a = document.createElement('a');
-            a.href = '#';
-            a.textContent = item.title;
-            a.addEventListener('click', (e) => {
-                e.preventDefault();
-                showPressDetail(artistName, item.index, item);
-            });
-            li.appendChild(a);
-            pressList.appendChild(li);
-        });
         
         // 평론 데이터 저장 (나중에 상세 페이지에서 사용)
         if (!window.pressData) {
@@ -426,7 +453,7 @@ async function loadPressList(artistName, targetElement) {
             return false;
         }
         
-        console.log('Press 리스트 성공적으로 로드됨:', pressItems.length, '개 항목');
+        console.log('Press 리스트 성공적으로 로드됨:', pressItems.length, '개 파일');
         targetElement.innerHTML = '';
         targetElement.appendChild(pressList);
         return true; // 성공적으로 로드됨
@@ -442,7 +469,21 @@ async function loadPressList(artistName, targetElement) {
     }
 }
 
-// 평론 상세 페이지 표시
+// 평론 상세 페이지 표시 (파일 기반)
+async function showPressDetailFromFile(artistName, pressItem) {
+    currentArtist = artistName;
+    window.location.hash = `press/${encodeURIComponent(artistName)}/${pressItem.fileIndex}`;
+    
+    mainPage.classList.remove('active');
+    artistPage.classList.remove('active');
+    pressDetailPage.classList.add('active');
+    
+    document.getElementById('press-title').textContent = `${artistName} - ${pressItem.title}`;
+    const detailText = document.getElementById('press-detail-text');
+    detailText.innerHTML = pressItem.content;
+}
+
+// 평론 상세 페이지 표시 (기존 방식 - 호환성 유지)
 async function showPressDetail(artistName, pressIndex, pressItem = null) {
     currentArtist = artistName;
     currentPressIndex = pressIndex;
