@@ -137,6 +137,9 @@ body {
     padding: 2rem 1.5rem;
     box-shadow: -2px 0 8px rgba(0,0,0,0.2);
     animation: slideIn 0.3s;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 @keyframes fadeIn {
@@ -154,10 +157,14 @@ body {
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid #eee;
+    flex-shrink: 0;
 }
 
 .artist-list {
     list-style: none;
+    overflow-y: auto;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
 }
 
 .artist-list li {

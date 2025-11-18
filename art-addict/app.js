@@ -228,24 +228,35 @@ async function loadArtistContent(name) {
     // 현재 로딩 중인 작가 설정
     loadingArtist = name;
     
-    // 모든 섹션을 먼저 표시 (기본 상태)
-    document.getElementById('about-section').classList.remove('hidden');
-    document.getElementById('press-section').classList.remove('hidden');
-    document.getElementById('cv-section').classList.remove('hidden');
-    
     // 모든 섹션 콘텐츠 초기화
     document.getElementById('about-content').innerHTML = '';
     document.getElementById('press-content').innerHTML = '';
     document.getElementById('cv-content').innerHTML = '';
+    
+    // 파일이 없는 섹션은 미리 숨기기 (딜레이 방지)
+    if (!artist.hasNote) {
+        document.getElementById('about-section').classList.add('hidden');
+    } else {
+        document.getElementById('about-section').classList.remove('hidden');
+    }
+    
+    if (!artist.hasPress) {
+        document.getElementById('press-section').classList.add('hidden');
+    } else {
+        document.getElementById('press-section').classList.remove('hidden');
+    }
+    
+    if (!artist.hasProfile) {
+        document.getElementById('cv-section').classList.add('hidden');
+    } else {
+        document.getElementById('cv-section').classList.remove('hidden');
+    }
     
     // About Artist
     if (artist.hasNote) {
         const aboutContent = document.getElementById('about-content');
         aboutContent.innerHTML = '<div class="loading">로딩 중...</div>';
         await loadDocx(getFilePath(name, 'note'), aboutContent, name);
-    } else {
-        // 파일이 없으면 About Artist 섹션 숨기기
-        document.getElementById('about-section').classList.add('hidden');
     }
     
     // 로딩 중 작가가 변경되었는지 확인
@@ -260,9 +271,6 @@ async function loadArtistContent(name) {
         if (!pressLoaded) {
             document.getElementById('press-section').classList.add('hidden');
         }
-    } else {
-        // hasPress가 false면 Press 섹션 숨기기
-        document.getElementById('press-section').classList.add('hidden');
     }
     
     // 로딩 중 작가가 변경되었는지 확인
@@ -273,9 +281,6 @@ async function loadArtistContent(name) {
         const cvContent = document.getElementById('cv-content');
         cvContent.innerHTML = '<div class="loading">로딩 중...</div>';
         await loadDocx(getFilePath(name, 'profile'), cvContent, name);
-    } else {
-        // 파일이 없으면 CV 섹션 숨기기
-        document.getElementById('cv-section').classList.add('hidden');
     }
     
     // 모든 섹션 닫기
