@@ -41,22 +41,23 @@ body {
     justify-content: space-between;
 }
 
+.site-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+    letter-spacing: 0.05em;
+}
+
 .menu-toggle {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    padding: 0.5rem 1rem;
     margin-left: auto;
-}
-
-.menu-toggle span {
-    width: 24px;
-    height: 2px;
-    background-color: #333;
-    transition: all 0.3s;
+    font-size: 1rem;
+    color: #333;
+    font-weight: 500;
 }
 
 .back-button {
